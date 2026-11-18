@@ -95,6 +95,7 @@ class MainActivity : Activity() {
 
     private fun setupNameTab() {
         val input = findViewById<EditText>(R.id.nameSearchInput)
+        val button = findViewById<Button>(R.id.nameSearchButton)
         val emptyText = findViewById<TextView>(R.id.nameEmptyText)
         val recycler = findViewById<RecyclerView>(R.id.nameResultsRecycler)
         val chipContainer = findViewById<LinearLayout>(R.id.nameChipContainer)
@@ -104,30 +105,32 @@ class MainActivity : Activity() {
         recycler.adapter = nameAdapter
         recycler.isNestedScrollingEnabled = false
 
+        nameAdapter.submit(emptyList())
+        emptyText.text = "أدخل اسمًا للبحث ثم اضغط بحث"
+
+        fun doSearch() {
+            val q = input.text.toString().trim()
+            if (q.isEmpty()) {
+                nameAdapter.submit(emptyList())
+                emptyText.text = "الرجاء إدخال اسم للبحث"
+                return
+            }
+            val results = ContactsRepository.searchByName(q, selectedNameNetwork)
+            nameAdapter.submit(results)
+            emptyText.text = if (results.isEmpty()) "لا توجد نتائج" else "عدد النتائج: ${results.size}"
+        }
+
         setupChipContainer(chipContainer) { network ->
             selectedNameNetwork = network
-            performNameSearch(input.text.toString(), emptyText)
-        }
-
-        input.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                performNameSearch(s?.toString().orEmpty(), emptyText)
+            val q = input.text.toString().trim()
+            if (q.isNotEmpty()) {
+                val results = ContactsRepository.searchByName(q, selectedNameNetwork)
+                nameAdapter.submit(results)
+                emptyText.text = if (results.isEmpty()) "لا توجد نتائج" else "عدد النتائج: ${results.size}"
             }
-            override fun afterTextChanged(s: Editable?) {}
-        })
-
-        performNameSearch("", emptyText)
-    }
-
-    private fun performNameSearch(q: String, emptyText: TextView) {
-        val results = ContactsRepository.searchByName(q, selectedNameNetwork)
-        nameAdapter.submit(results)
-        emptyText.text = when {
-            q.trim().isEmpty() -> "أدخل اسمًا للبحث أو تصفح القائمة"
-            results.isEmpty() -> "لا توجد نتائج"
-            else -> "عدد النتائج: ${results.size}"
         }
+
+        button.setOnClickListener { doSearch() }
     }
 
     private fun setupChipContainer(container: LinearLayout, onSelect: (String) -> Unit) {

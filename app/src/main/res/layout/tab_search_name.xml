@@ -32,6 +32,14 @@
             android:textColor="@color/text_primary"
             android:textSize="17sp" />
 
+        <Button
+            android:id="@+id/nameSearchButton"
+            style="@style/Widget.WhoIsThat.PrimaryButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/search" />
+
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
