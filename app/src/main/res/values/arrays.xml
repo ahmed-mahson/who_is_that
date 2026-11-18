@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="network_names">
+        <item>@string/all_networks</item>
+        <item>@string/yemen_mobile</item>
+        <item>@string/you</item>
+        <item>@string/sabafon</item>
+        <item>@string/way</item>
+        <item>@string/yemennet</item>
+    </string-array>
+</resources>

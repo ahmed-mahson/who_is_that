@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_primary">#173B77</color>
+    <color name="brand_primary_dark">#102B59</color>
+    <color name="brand_accent">#F5C842</color>
+    <color name="carrier_yemen_mobile">#AE164D</color>
+    <color name="carrier_you">#F5C842</color>
+    <color name="carrier_sabafon">#1760B5</color>
+    <color name="carrier_way">#683D9A</color>
+    <color name="carrier_yemennet">#279448</color>
+    <color name="surface">#F6F7FA</color>
+    <color name="surface_card">#FFFFFF</color>
+    <color name="outline">#D9DFE8</color>
+    <color name="text_primary">#172238</color>
+    <color name="text_secondary">#667085</color>
+    <color name="text_on_primary">#FFFFFF</color>
+</resources>

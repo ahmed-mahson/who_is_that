@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">من هو ذا؟</string>
+    <string name="app_name_en">Who is that?</string>
+    <string name="search_phone_title">ابحث برقم الهاتف</string>
+    <string name="search_name_title">بحث بالاسم</string>
+    <string name="search_results_title">نتائج البحث</string>
+    <string name="phone_hint">أدخل رقم الهاتف</string>
+    <string name="name_hint">اكتب الاسم</string>
+    <string name="network_label">الشبكة</string>
+    <string name="search">بحث</string>
+    <string name="all_networks">جميع الشبكات</string>
+    <string name="yemen_mobile">يمن موبايل</string>
+    <string name="you">YOU</string>
+    <string name="sabafon">سبأفون</string>
+    <string name="way">واي</string>
+    <string name="yemennet">يمن نت</string>
+    <string name="contact_us">تواصل معنا</string>
+    <string name="by_name">بالاسم</string>
+    <string name="by_number">بالرقم</string>
+    <string name="about_tagline">دليلك الذكي للبحث عن الأرقام والأسماء</string>
+    <string name="connection_help">حل مشكلة عدم الاتصال</string>
+    <string name="deletion_requests">عرض طلباتي للحذف</string>
+    <string name="check_updates">البحث عن تحديثات</string>
+    <string name="privacy_policy">سياسة الخصوصية</string>
+    <string name="sample_result_name">اسم تجريبي</string>
+    <string name="sample_masked_number">77•••019</string>
+</resources>
