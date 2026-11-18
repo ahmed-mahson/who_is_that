@@ -11,6 +11,9 @@
         <item name="android:windowActionModeOverlay">true</item>
     </style>
 
+    <style name="Widget" />
+    <style name="Widget.WhoIsThat" />
+
     <style name="Widget.WhoIsThat.PrimaryButton">
         <item name="android:background">@drawable/bg_primary_button</item>
         <item name="android:textColor">@color/text_on_primary</item>
