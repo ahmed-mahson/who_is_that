@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface"
+    android:fillViewport="true"
+    android:layoutDirection="rtl">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <ImageView
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:layout_gravity="end"
+            android:contentDescription="@string/app_name"
+            android:scaleType="fitCenter"
+            android:src="@drawable/who_is_that_logo" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="@string/search_phone_title"
+            android:textColor="@color/text_primary"
+            android:textSize="25sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/numberPhoneInput"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_search_field"
+            android:gravity="center"
+            android:hint="@string/phone_hint"
+            android:inputType="phone"
+            android:padding="12dp"
+            android:textColor="@color/text_primary"
+            android:textDirection="ltr"
+            android:textSize="21sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/network_label"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fillViewport="false"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/numberChipContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView android:layout_width="wrap_content" android:layout_height="42dp" android:layout_marginEnd="8dp" android:background="@drawable/bg_network_chip" android:gravity="center" android:paddingStart="14dp" android:paddingEnd="14dp" android:text="@string/all_networks" android:textColor="@color/brand_primary" android:textSize="14sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="42dp" android:layout_marginEnd="8dp" android:background="@drawable/bg_network_chip" android:gravity="center" android:paddingStart="14dp" android:paddingEnd="14dp" android:text="@string/yemen_mobile" android:textColor="@color/carrier_yemen_mobile" android:textSize="14sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="42dp" android:layout_marginEnd="8dp" android:background="@drawable/bg_network_chip" android:gravity="center" android:paddingStart="14dp" android:paddingEnd="14dp" android:text="@string/you" android:textColor="@color/carrier_you" android:textSize="14sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="42dp" android:layout_marginEnd="8dp" android:background="@drawable/bg_network_chip" android:gravity="center" android:paddingStart="14dp" android:paddingEnd="14dp" android:text="@string/sabafon" android:textColor="@color/carrier_sabafon" android:textSize="14sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="42dp" android:layout_marginEnd="8dp" android:background="@drawable/bg_network_chip" android:gravity="center" android:paddingStart="14dp" android:paddingEnd="14dp" android:text="@string/way" android:textColor="@color/carrier_way" android:textSize="14sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="42dp" android:background="@drawable/bg_network_chip" android:gravity="center" android:paddingStart="14dp" android:paddingEnd="14dp" android:text="@string/yemennet" android:textColor="@color/carrier_yemennet" android:textSize="14sp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <Button
+            android:id="@+id/numberSearchButton"
+            style="@style/Widget.WhoIsThat.PrimaryButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="24dp"
+            android:text="@string/search" />
+
+        <TextView
+            android:id="@+id/numberEmptyText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text=""
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/numberResultsRecycler"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:nestedScrollingEnabled="false" />
+    </LinearLayout>
+</ScrollView>
