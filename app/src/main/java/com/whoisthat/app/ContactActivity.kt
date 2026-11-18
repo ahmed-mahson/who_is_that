@@ -1,9 +1,9 @@
 package com.whoisthat.app
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import android.app.Activity
 
-class ContactActivity : AppCompatActivity() {
+class ContactActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_contact)

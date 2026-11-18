@@ -6,9 +6,9 @@ import android.os.Bundle
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import android.app.Activity
 
-class SearchActivity : AppCompatActivity() {
+class SearchActivity : Activity() {
 
     private var selectedNetwork: String = "جميع الشبكات"
     private var selectedChip: TextView? = null
