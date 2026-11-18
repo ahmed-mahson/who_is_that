@@ -31,9 +31,9 @@ object NetworkRepository {
         "WQdc93e7094-327b-4ff3-bf2e-c52f29a8277f      "
     private const val COOKIE =
         "csrftoken=74wEeG0TBlOdRqUGLDuVvJt3jPEzZBPY; _clck=1go9in%7C2%7Cfxb%7C0%7C2011; " +
-            "_clsk=ik0jf9%7C1751614102753%7C1%7C1%7Cq.clarity.ms%2Fcollect"
+            "_clsk=ik0jf9%7C1751614102753%7C1%7C1%7Cq.clarity.ms%2Fcollect                          "
     private const val USER_AGENT =
-        "Dalvik/2.1.0 (Linux; U; Android 7.1.2; SM-N975F Build/NMF26X)"
+        "Dalvik/2.1.0 (Linux; U; Android 7.1.2; SM-N975F Build/N2G48H)"
 
     private val executor = Executors.newFixedThreadPool(4)
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -68,7 +68,8 @@ object NetworkRepository {
             .put("Auth", APP_AUTH)
             .put("phone", phone)
             .put("User_Agent", USER_AGENT)
-            .put("numZ", "")
+            // The server model declares numZ as Nullable<int>; sending "" caused HTTP 400.
+            .put("numZ", 0)
             .put("versionApp", 26)
             .put("cookie", COOKIE)
             .put("username", "")
@@ -105,7 +106,10 @@ object NetworkRepository {
                 connection.disconnect()
 
                 when {
-                    code == 401 -> Outcome(error = "الخادم يرفض رمز التحقق (401)")
+                    code == 401 -> Outcome(
+                        error = "الخادم يرفض رمز التحقق (401) — بيانات الدخول في التطبيق المرجعي منتهية الصلاحية"
+                    )
+                    code == 400 -> Outcome(error = "الخادم رفض صيغة الطلب (400)")
                     code !in 200..299 -> Outcome(error = "خطأ من الخادم ($code)")
                     else -> Outcome(results = parseResults(text))
                 }
