@@ -87,9 +87,15 @@ class MainActivity : Activity() {
                 emptyText.text = "الرجاء إدخال رقم للبحث"
                 return@setOnClickListener
             }
-            val results = ContactsRepository.searchByNumber(q, selectedNumberNetwork)
-            numberAdapter.submit(results)
-            emptyText.text = if (results.isEmpty()) "لا توجد نتائج" else "عدد النتائج: ${results.size}"
+            button.isEnabled = false
+            emptyText.text = "جارٍ البحث..."
+            NetworkRepository.searchByNumber(q) { outcome ->
+                button.isEnabled = true
+                numberAdapter.submit(outcome.results)
+                emptyText.text = outcome.error
+                    ?: if (outcome.results.isEmpty()) "لا توجد نتائج"
+                    else "عدد النتائج: ${outcome.results.size}"
+            }
         }
     }
 
@@ -115,19 +121,19 @@ class MainActivity : Activity() {
                 emptyText.text = "الرجاء إدخال اسم للبحث"
                 return
             }
-            val results = ContactsRepository.searchByName(q, selectedNameNetwork)
-            nameAdapter.submit(results)
-            emptyText.text = if (results.isEmpty()) "لا توجد نتائج" else "عدد النتائج: ${results.size}"
+            button.isEnabled = false
+            emptyText.text = "جارٍ البحث..."
+            NetworkRepository.searchByName(q) { outcome ->
+                button.isEnabled = true
+                nameAdapter.submit(outcome.results)
+                emptyText.text = outcome.error
+                    ?: if (outcome.results.isEmpty()) "لا توجد نتائج"
+                    else "عدد النتائج: ${outcome.results.size}"
+            }
         }
 
         setupChipContainer(chipContainer) { network ->
             selectedNameNetwork = network
-            val q = input.text.toString().trim()
-            if (q.isNotEmpty()) {
-                val results = ContactsRepository.searchByName(q, selectedNameNetwork)
-                nameAdapter.submit(results)
-                emptyText.text = if (results.isEmpty()) "لا توجد نتائج" else "عدد النتائج: ${results.size}"
-            }
         }
 
         button.setOnClickListener { doSearch() }
