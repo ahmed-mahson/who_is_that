@@ -18,7 +18,7 @@
             android:id="@+id/resultName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/sample_result_name"
+            android:text=""
             android:textColor="@color/text_primary"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -27,7 +27,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="@string/sample_masked_number"
+            android:text=""
             android:textColor="@color/text_secondary"
             android:textDirection="ltr"
             android:textSize="16sp" />

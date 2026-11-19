@@ -2,8 +2,6 @@ package com.whoisthat.app
 
 import android.app.Activity
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -20,7 +18,6 @@ class MainActivity : Activity() {
 
     private lateinit var tabNumber: View
     private lateinit var tabName: View
-    private lateinit var tabContact: View
 
     private lateinit var numberAdapter: ResultAdapter
     private lateinit var nameAdapter: ResultAdapter
@@ -31,7 +28,6 @@ class MainActivity : Activity() {
 
         tabNumber = findViewById(R.id.tabNumber)
         tabName = findViewById(R.id.tabName)
-        tabContact = findViewById(R.id.tabContact)
 
         setupBottomNav()
         setupNumberTab()
@@ -42,13 +38,11 @@ class MainActivity : Activity() {
     private fun setupBottomNav() {
         findViewById<View>(R.id.navNumber).setOnClickListener { showTab(0) }
         findViewById<View>(R.id.navName).setOnClickListener { showTab(1) }
-        findViewById<View>(R.id.navContact).setOnClickListener { showTab(2) }
     }
 
     private fun showTab(index: Int) {
         tabNumber.visibility = if (index == 0) View.VISIBLE else View.GONE
         tabName.visibility = if (index == 1) View.VISIBLE else View.GONE
-        tabContact.visibility = if (index == 2) View.VISIBLE else View.GONE
 
         val activeColor = resources.getColor(R.color.brand_primary)
         val inactiveColor = resources.getColor(R.color.text_secondary)
@@ -61,7 +55,6 @@ class MainActivity : Activity() {
 
         setTabColors(index == 0, findViewById(R.id.navNumberIcon), findViewById(R.id.navNumberLabel))
         setTabColors(index == 1, findViewById(R.id.navNameIcon), findViewById(R.id.navNameLabel))
-        setTabColors(index == 2, findViewById(R.id.navContactIcon), findViewById(R.id.navContactLabel))
     }
 
     private fun setupNumberTab() {

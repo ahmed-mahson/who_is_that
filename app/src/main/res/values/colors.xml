@@ -2,7 +2,6 @@
 <resources>
     <color name="brand_primary">#173B77</color>
     <color name="brand_primary_dark">#102B59</color>
-    <color name="brand_accent">#F5C842</color>
     <color name="carrier_yemen_mobile">#AE164D</color>
     <color name="carrier_you">#F5C842</color>
     <color name="carrier_sabafon">#1760B5</color>
