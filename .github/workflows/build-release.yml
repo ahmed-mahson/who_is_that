@@ -25,13 +25,15 @@ jobs:
           distribution: 'temurin'
 
       - name: Install Gradle 8.7
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          source "$HOME/.sdkman/bin/sdkman-init.sh"
-          sdk install gradle 8.7
+          gh release download v8.7.0 -R gradle/gradle -p "gradle-8.7-bin.zip"
+          unzip -q gradle-8.7-bin.zip -d /opt/gradle
+          echo "/opt/gradle/gradle-8.7/bin" >> $GITHUB_PATH
 
       - name: Build Debug APK
         run: |
-          source "$HOME/.sdkman/bin/sdkman-init.sh"
           BUILD_GRADLE=$(find . -maxdepth 3 -name "build.gradle*" | head -n 1)
           PROJECT_DIR=$(dirname "$BUILD_GRADLE")
           echo "Building project in: $PROJECT_DIR"
