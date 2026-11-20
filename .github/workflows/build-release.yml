@@ -49,9 +49,11 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          if ! gradle assembleDebug --stacktrace > build.log 2>&1; then
-            echo "::error::Build Failed! Exact reason:"
-            grep -E -A 15 "What went wrong:|Caused by:" build.log | head -n 40
+          if ! gradle assembleDebug > build.log 2>&1; then
+            echo "::error::Manifest / Build Errors:"
+            grep -B 2 -A 10 "FAILURE: Build failed" build.log | head -n 45
+            echo "=== FULL MANIFEST MERGER LOG ==="
+            grep -E "Error:|Attribute|Element" build.log | head -n 30
             exit 1
           fi
 
