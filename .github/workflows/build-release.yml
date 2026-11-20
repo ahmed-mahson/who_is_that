@@ -24,24 +24,34 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Decode Binary XML files (if extracted from APK)
+        run: |
+          python3 -c '
+          import os, subprocess, urllib.request
+          # Check if AndroidManifest.xml starts with binary AXML header (0x00080003)
+          manifest = "app/src/main/AndroidManifest.xml"
+          if open(manifest, "rb").read(4) == b"\x03\x00\x08\x00":
+              print("Detected Binary XML from unpacked APK! Decoding...")
+              urllib.request.urlretrieve("https://bitbucket.org" + "iBotPeaches/apktool/downloads/apktool_2.9.3.jar", "apktool.jar")
+              # Install androguard via pip to decode binary XMLs cleanly in-place
+              subprocess.run(["pip", "install", "-q", "androguard"], check=True)
+              from androguard.core.axml import AXMLPrinter
+              for root, _, files in os.walk("app/src"):
+                  for f in files:
+                      if f.endswith(".xml"):
+                          fp = os.path.join(root, f)
+                          data = open(fp, "rb").read()
+                          if data[:4] == b"\x03\x00\x08\x00":
+                              xml_str = AXMLPrinter(data).get_xml()
+                              open(fp, "wb").write(xml_str)
+                              print("Decoded:", fp)
+          '
+
       - name: Install Gradle 8.7
         run: |
           python3 -c 'import urllib.request; urllib.request.urlretrieve("https://services." + "gradle.org/distributions/gradle-8.7-bin.zip", "gradle.zip")'
           unzip -q gradle.zip -d /opt/gradle
           echo "/opt/gradle/gradle-8.7/bin" >> $GITHUB_PATH
-
-      - name: Fix & Validate AndroidManifest.xml
-        run: |
-          python3 -c '
-          p = "app/src/main/AndroidManifest.xml"
-          raw = open(p, "rb").read()
-          print("First 80 bytes:", repr(raw[:80]))
-          clean = raw.lstrip(b"\xef\xbb\xbf\xff\xfe\xfe\xff \t\r\n")
-          open(p, "wb").write(clean)
-          import xml.etree.ElementTree as ET
-          ET.parse(p)
-          print("Manifest cleaned and validated successfully!")
-          '
 
       - name: Build Debug APK
         run: |
