@@ -18,13 +18,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check project structure
+        run: |
+          echo "=== REPO STRUCTURE ==="
+          find . -maxdepth 3 -not -path '*/.*'
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Decode & Clean Binary XML files
+      - name: Decode & Fix Binary XML files
         run: |
           pip install -q androguard
           python3 -c '
@@ -39,6 +44,17 @@ jobs:
                           xml_str = AXMLPrinter(data).get_xml()
                           open(fp, "wb").write(xml_str)
                           print("Decoded:", fp)
+
+          # Fix common manifest merger conflicts in decoded AndroidManifest.xml
+          mp = "app/src/main/AndroidManifest.xml"
+          txt = open(mp, "r", encoding="utf-8").read()
+          if "xmlns:tools" not in txt:
+              txt = txt.replace("<manifest ", "<manifest xmlns:tools=\"http://android.com\" ", 1)
+          txt = re.sub(r"<uses-sdk[^>]*/>", "", txt)
+          if "<application " in txt and "tools:replace=" not in txt:
+              txt = txt.replace("<application ", "<application tools:replace=\"android:appComponentFactory,android:allowBackup,android:label,android:theme,android:icon\" ", 1)
+          open(mp, "w", encoding="utf-8").write(txt)
+          print("Patched AndroidManifest.xml for merger compatibility")
           '
 
       - name: Install Gradle 8.7
@@ -50,10 +66,9 @@ jobs:
       - name: Build Debug APK
         run: |
           if ! gradle assembleDebug > build.log 2>&1; then
-            echo "=== MERGER REPORT ==="
+            echo "::error::Build Failed! Summary:"
             cat app/build/outputs/logs/manifest-merger-debug-report.txt 2>/dev/null | grep -E "ERROR|Conflict|Suggestion" -A 3 || true
-            echo "=== MANIFEST LINES 25-45 ==="
-            sed -n '25,45p' app/src/main/AndroidManifest.xml
+            grep -E -A 12 "What went wrong:|Caused by:" build.log | head -n 35
             exit 1
           fi
 
