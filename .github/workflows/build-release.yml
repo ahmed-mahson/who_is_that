@@ -1,17 +1,61 @@
+name: Build Android APK & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'V*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Accept Android SDK Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
       - name: Build Debug APK
         run: |
           GRADLEW_PATH=$(find . -maxdepth 3 -name "gradlew" | head -n 1)
           if [ -n "$GRADLEW_PATH" ]; then
             PROJECT_DIR=$(dirname "$GRADLEW_PATH")
+            echo "Found gradlew in: $PROJECT_DIR"
             cd "$PROJECT_DIR"
             chmod +x gradlew
             ./gradlew assembleDebug
           else
             BUILD_GRADLE=$(find . -maxdepth 3 -name "build.gradle*" | head -n 1)
             PROJECT_DIR=$(dirname "$BUILD_GRADLE")
+            echo "gradlew not found, generating wrapper 8.7 in: $PROJECT_DIR"
             cd "$PROJECT_DIR"
             gradle wrapper --gradle-version 8.7
             ./gradlew assembleDebug
           fi
           APK_FILE=$(find . -name "*.apk" | head -n 1)
           echo "APK_PATH=$PROJECT_DIR/${APK_FILE#./}" >> $GITHUB_ENV
+
+      - name: Upload APK to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: ${{ env.APK_PATH }}
+
+      - name: Upload APK to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${GITHUB_REF_NAME}" "${{ env.APK_PATH }}" --clobber
