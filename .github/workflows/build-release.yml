@@ -50,10 +50,10 @@ jobs:
       - name: Build Debug APK
         run: |
           if ! gradle assembleDebug > build.log 2>&1; then
-            echo "::error::Manifest / Build Errors:"
-            grep -B 2 -A 10 "FAILURE: Build failed" build.log | head -n 45
-            echo "=== FULL MANIFEST MERGER LOG ==="
-            grep -E "Error:|Attribute|Element" build.log | head -n 30
+            echo "=== DECODED MANIFEST ==="
+            nl -ba app/src/main/AndroidManifest.xml
+            echo "=== EXACT MERGER ERRORS ==="
+            grep -A 5 "AndroidManifest.xml" build.log
             exit 1
           fi
 
