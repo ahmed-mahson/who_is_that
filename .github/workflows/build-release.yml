@@ -38,7 +38,6 @@ jobs:
                       if data[:4] == b"\x03\x00\x08\x00":
                           xml_str = AXMLPrinter(data).get_xml()
                           open(fp, "wb").write(xml_str)
-                          print("Decoded:", fp)
 
           mp = "app/src/main/AndroidManifest.xml"
           txt = open(mp, "r", encoding="utf-8").read()
@@ -58,14 +57,22 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          if ! gradle assembleDebug > build.log 2>&1; then
-            echo "=== ERRORS BEFORE FAILURE ==="
-            grep -B 45 "FAILURE: Build failed" build.log
+          if ! gradle assembleDebug --console=plain > build.log 2>&1; then
+            grep -n "Error:" build.log -A 2 | head -n 25
             exit 1
           fi
 
           APK_FILE=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
           echo "APK_PATH=$APK_FILE" >> $GITHUB_ENV
+
+      - name: Upload Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs
+          path: |
+            build.log
+            app/src/main/AndroidManifest.xml
 
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
