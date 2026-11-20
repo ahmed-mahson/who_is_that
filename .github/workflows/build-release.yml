@@ -30,9 +30,18 @@ jobs:
           unzip -q gradle.zip -d /opt/gradle
           echo "/opt/gradle/gradle-8.7/bin" >> $GITHUB_PATH
 
-      - name: Validate AndroidManifest.xml
+      - name: Fix & Validate AndroidManifest.xml
         run: |
-          python3 -c 'import xml.etree.ElementTree as ET; ET.parse("app/src/main/AndroidManifest.xml"); print("Manifest XML is valid!")'
+          python3 -c '
+          p = "app/src/main/AndroidManifest.xml"
+          raw = open(p, "rb").read()
+          print("First 80 bytes:", repr(raw[:80]))
+          clean = raw.lstrip(b"\xef\xbb\xbf\xff\xfe\xfe\xff \t\r\n")
+          open(p, "wb").write(clean)
+          import xml.etree.ElementTree as ET
+          ET.parse(p)
+          print("Manifest cleaned and validated successfully!")
+          '
 
       - name: Build Debug APK
         run: |
