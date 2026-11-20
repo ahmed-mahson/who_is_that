@@ -23,24 +23,35 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: |
+          GRADLEW_PATH=$(find . -maxdepth 3 -name "gradlew" | head -n 1)
+          if [ -n "$GRADLEW_PATH" ]; then
+            PROJECT_DIR=$(dirname "$GRADLEW_PATH")
+            echo "Found gradlew in: $PROJECT_DIR"
+            cd "$PROJECT_DIR"
+            chmod +x gradlew
+            ./gradlew assembleDebug
+          else
+            BUILD_GRADLE=$(find . -maxdepth 3 -name "build.gradle*" | head -n 1)
+            PROJECT_DIR=$(dirname "$BUILD_GRADLE")
+            echo "gradlew not found, using system gradle in: $PROJECT_DIR"
+            cd "$PROJECT_DIR"
+            gradle assembleDebug
+          fi
+          APK_FILE=$(find . -name "*.apk" | head -n 1)
+          echo "APK_PATH=$PROJECT_DIR/${APK_FILE#./}" >> $GITHUB_ENV
 
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: ${{ env.APK_PATH }}
 
       - name: Upload APK to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${GITHUB_REF_NAME}" app/build/outputs/apk/debug/app-debug.apk --clobber
-          
+          gh release upload "${GITHUB_REF_NAME}" "${{ env.APK_PATH }}" --clobber
