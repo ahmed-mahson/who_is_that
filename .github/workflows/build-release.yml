@@ -30,21 +30,19 @@ jobs:
           unzip -q gradle.zip -d /opt/gradle
           echo "/opt/gradle/gradle-8.7/bin" >> $GITHUB_PATH
 
+      - name: Validate AndroidManifest.xml
+        run: xmllint --noout app/src/main/AndroidManifest.xml
+
       - name: Build Debug APK
         run: |
-          BUILD_GRADLE=$(find . -maxdepth 3 -name "build.gradle*" | head -n 1)
-          PROJECT_DIR=$(dirname "$BUILD_GRADLE")
-          echo "Building project in: $PROJECT_DIR"
-          cd "$PROJECT_DIR"
-
-          if ! gradle assembleDebug > build.log 2>&1; then
+          if ! gradle assembleDebug --stacktrace > build.log 2>&1; then
             echo "::error::Build Failed! Exact reason:"
-            grep -E -A 10 "What went wrong:|Caused by:|Execution failed" build.log | head -n 30
+            grep -E -A 15 "What went wrong:|Caused by:" build.log | head -n 40
             exit 1
           fi
 
-          APK_FILE=$(find . -name "*.apk" | head -n 1)
-          echo "APK_PATH=$PROJECT_DIR/${APK_FILE#./}" >> $GITHUB_ENV
+          APK_FILE=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
+          echo "APK_PATH=$APK_FILE" >> $GITHUB_ENV
 
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
