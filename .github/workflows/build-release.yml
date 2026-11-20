@@ -24,30 +24,25 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Accept Android SDK Licenses
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-
       - name: Build Debug APK
         run: |
           GRADLEW_PATH=$(find . -maxdepth 3 -name "gradlew" | head -n 1)
           if [ -n "$GRADLEW_PATH" ]; then
             PROJECT_DIR=$(dirname "$GRADLEW_PATH")
-            echo "Found gradlew in: $PROJECT_DIR"
             cd "$PROJECT_DIR"
             chmod +x gradlew
             BUILD_CMD="./gradlew assembleDebug"
           else
             BUILD_GRADLE=$(find . -maxdepth 3 -name "build.gradle*" | head -n 1)
             PROJECT_DIR=$(dirname "$BUILD_GRADLE")
-            echo "gradlew not found, generating wrapper 8.7 in: $PROJECT_DIR"
             cd "$PROJECT_DIR"
             gradle wrapper --gradle-version 8.7
             BUILD_CMD="./gradlew assembleDebug"
           fi
 
           if ! $BUILD_CMD > build.log 2>&1; then
-            echo "=== EXACT ERROR DETAILS ==="
-            grep -A 15 "What went wrong:" build.log || tail -n 30 build.log
+            echo "::error::Build Failed! Here is the exact reason:"
+            grep -E -A 10 "What went wrong:|Caused by:|Execution failed" build.log | head -n 30
             exit 1
           fi
 
