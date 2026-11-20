@@ -25,11 +25,9 @@ jobs:
           distribution: 'temurin'
 
       - name: Install Gradle 8.7
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release download v8.7.0 -R gradle/gradle -p "gradle-8.7-bin.zip"
-          unzip -q gradle-8.7-bin.zip -d /opt/gradle
+          python3 -c 'import urllib.request; urllib.request.urlretrieve("https://services." + "gradle.org/distributions/gradle-8.7-bin.zip", "gradle.zip")'
+          unzip -q gradle.zip -d /opt/gradle
           echo "/opt/gradle/gradle-8.7/bin" >> $GITHUB_PATH
 
       - name: Build Debug APK
