@@ -24,24 +24,21 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Install Gradle 8.7
+        run: |
+          wget -q https://gradle.org
+          unzip -q gradle-8.7-bin.zip -d /opt/gradle
+          echo "/opt/gradle/gradle-8.7/bin" >> $GITHUB_PATH
+
       - name: Build Debug APK
         run: |
-          GRADLEW_PATH=$(find . -maxdepth 3 -name "gradlew" | head -n 1)
-          if [ -n "$GRADLEW_PATH" ]; then
-            PROJECT_DIR=$(dirname "$GRADLEW_PATH")
-            cd "$PROJECT_DIR"
-            chmod +x gradlew
-            BUILD_CMD="./gradlew assembleDebug"
-          else
-            BUILD_GRADLE=$(find . -maxdepth 3 -name "build.gradle*" | head -n 1)
-            PROJECT_DIR=$(dirname "$BUILD_GRADLE")
-            cd "$PROJECT_DIR"
-            gradle wrapper --gradle-version 8.7
-            BUILD_CMD="./gradlew assembleDebug"
-          fi
-
-          if ! $BUILD_CMD > build.log 2>&1; then
-            echo "::error::Build Failed! Here is the exact reason:"
+          BUILD_GRADLE=$(find . -maxdepth 3 -name "build.gradle*" | head -n 1)
+          PROJECT_DIR=$(dirname "$BUILD_GRADLE")
+          echo "Building project in: $PROJECT_DIR"
+          cd "$PROJECT_DIR"
+          
+          if ! gradle assembleDebug > build.log 2>&1; then
+            echo "::error::Build Failed! Exact reason:"
             grep -E -A 10 "What went wrong:|Caused by:|Execution failed" build.log | head -n 30
             exit 1
           fi
