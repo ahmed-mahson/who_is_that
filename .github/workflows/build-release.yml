@@ -35,15 +35,22 @@ jobs:
             echo "Found gradlew in: $PROJECT_DIR"
             cd "$PROJECT_DIR"
             chmod +x gradlew
-            ./gradlew assembleDebug
+            BUILD_CMD="./gradlew assembleDebug"
           else
             BUILD_GRADLE=$(find . -maxdepth 3 -name "build.gradle*" | head -n 1)
             PROJECT_DIR=$(dirname "$BUILD_GRADLE")
             echo "gradlew not found, generating wrapper 8.7 in: $PROJECT_DIR"
             cd "$PROJECT_DIR"
             gradle wrapper --gradle-version 8.7
-            ./gradlew assembleDebug
+            BUILD_CMD="./gradlew assembleDebug"
           fi
+
+          if ! $BUILD_CMD > build.log 2>&1; then
+            echo "=== EXACT ERROR DETAILS ==="
+            grep -A 15 "What went wrong:" build.log || tail -n 30 build.log
+            exit 1
+          fi
+
           APK_FILE=$(find . -name "*.apk" | head -n 1)
           echo "APK_PATH=$PROJECT_DIR/${APK_FILE#./}" >> $GITHUB_ENV
 
