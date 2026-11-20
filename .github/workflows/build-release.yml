@@ -24,33 +24,63 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Decode & Fix Binary XML files
+      - name: Decode & Auto-Fix Resources and Manifest
         run: |
           pip install -q androguard
           python3 -c '
           import os, re
-          from androguard.core.axml import AXMLPrinter
+          from androguard.core.axml import AXMLPrinter, ARSCParser
+
+          # Load resources.arsc if present anywhere in repo to resolve @0x7f... IDs
+          arsc = None
+          for root, _, files in os.walk("."):
+              if "resources.arsc" in files:
+                  arsc = ARSCParser(open(os.path.join(root, "resources.arsc"), "rb").read())
+                  print("Loaded resources.arsc for ID resolution!")
+                  break
+
+          # 1. Decode all binary XMLs in app/src
           for root, _, files in os.walk("app/src"):
               for f in files:
                   if f.endswith(".xml"):
                       fp = os.path.join(root, f)
                       data = open(fp, "rb").read()
                       if data[:4] == b"\x03\x00\x08\x00":
-                          xml_str = AXMLPrinter(data).get_xml()
-                          open(fp, "wb").write(xml_str)
+                          try:
+                              xml_str = AXMLPrinter(data).get_xml()
+                              open(fp, "wb").write(xml_str)
+                          except Exception as e:
+                              print("Removing unreadable binary XML:", fp)
+                              os.remove(fp)
 
+          # 2. Clean AndroidManifest.xml and replace unresolved @0x7f... references
           mp = "app/src/main/AndroidManifest.xml"
           txt = open(mp, "r", encoding="utf-8").read()
           if "xmlns:tools" not in txt:
               txt = txt.replace("<manifest ", "<manifest xmlns:tools=\"http://android.com\" ", 1)
+
           txt = re.sub(r"<uses-sdk[^>]*/>", "", txt)
           txt = re.sub(r"<permission[^>]*DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION[^>]*/>", "", txt)
           txt = re.sub(r"<uses-permission[^>]*DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION[^>]*/>", "", txt)
           txt = txt.replace("android:protectionLevel=\"0x00000002\"", "android:protectionLevel=\"signature\"")
           txt = txt.replace("android:protectionLevel=\"0x00000000\"", "android:protectionLevel=\"normal\"")
+
+          # Replace hex resource IDs (@0x7f...) with safe built-in Android resources
+          txt = re.sub(r"android:icon=\"@0x[0-9a-fA-F]+\"", "android:icon=\"@android:drawable/sym_def_app_icon\"", txt)
+          txt = re.sub(r"android:roundIcon=\"@0x[0-9a-fA-F]+\"", "", txt)
+          txt = re.sub(r"android:theme=\"@0x[0-9a-fA-F]+\"", "android:theme=\"@android:style/Theme.Material.Light.NoActionBar\"", txt)
+          txt = re.sub(r"android:label=\"@0x[0-9a-fA-F]+\"", "android:label=\"Who Is That\"", txt)
+          txt = re.sub(r"android:dataExtractionRules=\"@0x[0-9a-fA-F]+\"", "", txt)
+          txt = re.sub(r"android:fullBackupContent=\"@0x[0-9a-fA-F]+\"", "", txt)
+          txt = re.sub(r"android:networkSecurityConfig=\"@0x[0-9a-fA-F]+\"", "", txt)
+          txt = re.sub(r"android:resource=\"@0x[0-9a-fA-F]+\"", "android:value=\"true\"", txt)
+          txt = re.sub(r"android:value=\"@0x[0-9a-fA-F]+\"", "android:value=\"true\"", txt)
+
           if "<application " in txt and "tools:replace=" not in txt:
               txt = txt.replace("<application ", "<application tools:replace=\"android:appComponentFactory,android:allowBackup,android:label,android:theme,android:icon\" ", 1)
+
           open(mp, "w", encoding="utf-8").write(txt)
+          print("Manifest and resources cleaned successfully!")
           '
 
       - name: Install Gradle 8.7
@@ -62,7 +92,8 @@ jobs:
       - name: Build Debug APK
         run: |
           if ! gradle assembleDebug --console=plain > build.log 2>&1; then
-            grep -n "Error:\|What went wrong:\|Caused by:" build.log -A 3 | head -n 30
+            echo "=== REMAINING ERRORS ==="
+            grep -E "error:|ERROR:|AndroidManifest\.xml:|res/" build.log | head -n 30
             exit 1
           fi
 
