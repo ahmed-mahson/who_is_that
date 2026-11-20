@@ -44,6 +44,10 @@ jobs:
           if "xmlns:tools" not in txt:
               txt = txt.replace("<manifest ", "<manifest xmlns:tools=\"http://android.com\" ", 1)
           txt = re.sub(r"<uses-sdk[^>]*/>", "", txt)
+          txt = re.sub(r"<permission[^>]*DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION[^>]*/>", "", txt)
+          txt = re.sub(r"<uses-permission[^>]*DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION[^>]*/>", "", txt)
+          txt = txt.replace("android:protectionLevel=\"0x00000002\"", "android:protectionLevel=\"signature\"")
+          txt = txt.replace("android:protectionLevel=\"0x00000000\"", "android:protectionLevel=\"normal\"")
           if "<application " in txt and "tools:replace=" not in txt:
               txt = txt.replace("<application ", "<application tools:replace=\"android:appComponentFactory,android:allowBackup,android:label,android:theme,android:icon\" ", 1)
           open(mp, "w", encoding="utf-8").write(txt)
@@ -58,7 +62,7 @@ jobs:
       - name: Build Debug APK
         run: |
           if ! gradle assembleDebug --console=plain > build.log 2>&1; then
-            grep -n "Error:" build.log -A 2 | head -n 25
+            grep -n "Error:\|What went wrong:\|Caused by:" build.log -A 3 | head -n 30
             exit 1
           fi
 
