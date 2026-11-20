@@ -24,27 +24,21 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Decode Binary XML files (if extracted from APK)
+      - name: Decode Binary XML files
         run: |
+          pip install -q androguard
           python3 -c '
-          import os, subprocess, urllib.request
-          # Check if AndroidManifest.xml starts with binary AXML header (0x00080003)
-          manifest = "app/src/main/AndroidManifest.xml"
-          if open(manifest, "rb").read(4) == b"\x03\x00\x08\x00":
-              print("Detected Binary XML from unpacked APK! Decoding...")
-              urllib.request.urlretrieve("https://bitbucket.org" + "iBotPeaches/apktool/downloads/apktool_2.9.3.jar", "apktool.jar")
-              # Install androguard via pip to decode binary XMLs cleanly in-place
-              subprocess.run(["pip", "install", "-q", "androguard"], check=True)
-              from androguard.core.axml import AXMLPrinter
-              for root, _, files in os.walk("app/src"):
-                  for f in files:
-                      if f.endswith(".xml"):
-                          fp = os.path.join(root, f)
-                          data = open(fp, "rb").read()
-                          if data[:4] == b"\x03\x00\x08\x00":
-                              xml_str = AXMLPrinter(data).get_xml()
-                              open(fp, "wb").write(xml_str)
-                              print("Decoded:", fp)
+          import os
+          from androguard.core.axml import AXMLPrinter
+          for root, _, files in os.walk("app/src"):
+              for f in files:
+                  if f.endswith(".xml"):
+                      fp = os.path.join(root, f)
+                      data = open(fp, "rb").read()
+                      if data[:4] == b"\x03\x00\x08\x00":
+                          xml_str = AXMLPrinter(data).get_xml()
+                          open(fp, "wb").write(xml_str)
+                          print("Decoded:", fp)
           '
 
       - name: Install Gradle 8.7
