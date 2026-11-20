@@ -24,11 +24,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Decode Binary XML files
+      - name: Decode & Clean Binary XML files
         run: |
           pip install -q androguard
           python3 -c '
-          import os
+          import os, re
           from androguard.core.axml import AXMLPrinter
           for root, _, files in os.walk("app/src"):
               for f in files:
@@ -50,10 +50,10 @@ jobs:
       - name: Build Debug APK
         run: |
           if ! gradle assembleDebug > build.log 2>&1; then
-            echo "=== DECODED MANIFEST ==="
-            nl -ba app/src/main/AndroidManifest.xml
-            echo "=== EXACT MERGER ERRORS ==="
-            grep -A 5 "AndroidManifest.xml" build.log
+            echo "=== MERGER REPORT ==="
+            cat app/build/outputs/logs/manifest-merger-debug-report.txt 2>/dev/null | grep -E "ERROR|Conflict|Suggestion" -A 3 || true
+            echo "=== MANIFEST LINES 25-45 ==="
+            sed -n '25,45p' app/src/main/AndroidManifest.xml
             exit 1
           fi
 
