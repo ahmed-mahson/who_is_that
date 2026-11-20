@@ -24,14 +24,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Decode & Fix All Hex Resource References
+      - name: Decode & Clean All Unpacked APK Files
         run: |
           pip install -q androguard
           python3 -c '
           import os, re
           from androguard.core.axml import AXMLPrinter
 
-          # 1. Decode all binary XMLs and remove any corrupted/unreadable XMLs in res/
+          hex_pat = r"@(?:0x)?7[fF][0-9a-fA-F]{6}"
+
+          # 1. Decode binary XMLs and remove any broken/hex-referencing XMLs in res/
           for root, _, files in os.walk("app/src"):
               for f in files:
                   if f.endswith(".xml"):
@@ -46,14 +48,12 @@ jobs:
                                   os.remove(fp)
                                   continue
 
-                      # Clean hex references (@7F... or @0x7F...) inside res/ XML files
                       if "AndroidManifest.xml" not in fp and os.path.exists(fp):
                           content = open(fp, "r", encoding="utf-8", errors="ignore").read()
-                          if re.search(r"@(0x)?7[fF][0-9a-fA-F]{6}", content):
-                              # Remove broken XML files inside res/ that point to hex IDs
+                          if re.search(hex_pat, content):
                               os.remove(fp)
 
-          # 2. Clean AndroidManifest.xml completely from all @7F... / @0x7F... IDs
+          # 2. Clean AndroidManifest.xml thoroughly
           mp = "app/src/main/AndroidManifest.xml"
           txt = open(mp, "r", encoding="utf-8").read()
 
@@ -66,23 +66,22 @@ jobs:
           txt = txt.replace("android:protectionLevel=\"0x00000002\"", "android:protectionLevel=\"signature\"")
           txt = txt.replace("android:protectionLevel=\"0x00000000\"", "android:protectionLevel=\"normal\"")
 
-          # Fix known attributes with @7F... or @0x7F...
-          hex_pat = r"@(?:0x)?7[fF][0-9a-fA-F]{6}"
+          # Replace core app attributes with safe Android defaults
           txt = re.sub(rf"android:icon=\"{hex_pat}\"", "android:icon=\"@android:drawable/sym_def_app_icon\"", txt)
           txt = re.sub(rf"android:theme=\"{hex_pat}\"", "android:theme=\"@android:style/Theme.Material.Light.NoActionBar\"", txt)
           txt = re.sub(rf"android:label=\"{hex_pat}\"", "android:label=\"Who Is That\"", txt)
 
-          # Remove any <meta-data ... android:resource="@7F..." /> tags completely
-          txt = re.sub(rf"<meta-data[^>]*android:resource=\"{hex_pat}\"[^>]*/>", "", txt)
+          # Remove entire self-closing tags (<meta-data>, <property>, etc.) that reference any @7F... ID
+          txt = re.sub(rf"<[a-zA-Z0-9_-]+[^>]*{hex_pat}[^>]*/>", "", txt)
 
-          # Remove any remaining attribute that still has @7F... or @0x7F...
+          # Remove any leftover attribute containing @7F...
           txt = re.sub(rf"\s+[a-zA-Z0-9_:-]+=\"{hex_pat}\"", "", txt)
 
           if "<application " in txt and "tools:replace=" not in txt:
               txt = txt.replace("<application ", "<application tools:replace=\"android:appComponentFactory,android:allowBackup,android:label,android:theme,android:icon\" ", 1)
 
           open(mp, "w", encoding="utf-8").write(txt)
-          print("All hex references cleaned successfully!")
+          print("Manifest and all resources cleaned!")
           '
 
       - name: Install Gradle 8.7
@@ -94,7 +93,7 @@ jobs:
       - name: Build Debug APK
         run: |
           if ! gradle assembleDebug --console=plain > build.log 2>&1; then
-            echo "=== REMAINING ERRORS ==="
+            echo "=== BUILD ERRORS ==="
             grep -E "error:|ERROR:|What went wrong:|Caused by:" build.log | head -n 30
             exit 1
           fi
