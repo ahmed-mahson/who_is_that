@@ -1,0 +1,124 @@
+name: Build Android APK & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'V*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Decode & Clean All Unpacked APK Files
+        run: |
+          pip install -q androguard
+          python3 -c '
+          import os, re
+          from androguard.core.axml import AXMLPrinter
+
+          hex_pat = r"@(?:0x)?7[fF][0-9a-fA-F]{6}"
+
+          # 1. Decode binary XMLs and remove any broken/hex-referencing XMLs in res/
+          for root, _, files in os.walk("app/src"):
+              for f in files:
+                  if f.endswith(".xml"):
+                      fp = os.path.join(root, f)
+                      data = open(fp, "rb").read()
+                      if data[:4] == b"\x03\x00\x08\x00":
+                          try:
+                              xml_str = AXMLPrinter(data).get_xml()
+                              open(fp, "wb").write(xml_str)
+                          except Exception:
+                              if "AndroidManifest.xml" not in fp:
+                                  os.remove(fp)
+                                  continue
+
+                      if "AndroidManifest.xml" not in fp and os.path.exists(fp):
+                          content = open(fp, "r", encoding="utf-8", errors="ignore").read()
+                          if re.search(hex_pat, content):
+                              os.remove(fp)
+
+          # 2. Clean AndroidManifest.xml thoroughly
+          mp = "app/src/main/AndroidManifest.xml"
+          txt = open(mp, "r", encoding="utf-8").read()
+
+          if "xmlns:tools" not in txt:
+              txt = txt.replace("<manifest ", "<manifest xmlns:tools=\"http://android.com\" ", 1)
+
+          txt = re.sub(r"<uses-sdk[^>]*/>", "", txt)
+          txt = re.sub(r"<permission[^>]*DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION[^>]*/>", "", txt)
+          txt = re.sub(r"<uses-permission[^>]*DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION[^>]*/>", "", txt)
+          txt = txt.replace("android:protectionLevel=\"0x00000002\"", "android:protectionLevel=\"signature\"")
+          txt = txt.replace("android:protectionLevel=\"0x00000000\"", "android:protectionLevel=\"normal\"")
+
+          # Replace core app attributes with safe Android defaults
+          txt = re.sub(rf"android:icon=\"{hex_pat}\"", "android:icon=\"@android:drawable/sym_def_app_icon\"", txt)
+          txt = re.sub(rf"android:theme=\"{hex_pat}\"", "android:theme=\"@android:style/Theme.Material.Light.NoActionBar\"", txt)
+          txt = re.sub(rf"android:label=\"{hex_pat}\"", "android:label=\"Who Is That\"", txt)
+
+          # Remove entire self-closing tags (<meta-data>, <property>, etc.) that reference any @7F... ID
+          txt = re.sub(rf"<[a-zA-Z0-9_-]+[^>]*{hex_pat}[^>]*/>", "", txt)
+
+          # Remove any leftover attribute containing @7F...
+          txt = re.sub(rf"\s+[a-zA-Z0-9_:-]+=\"{hex_pat}\"", "", txt)
+
+          if "<application " in txt and "tools:replace=" not in txt:
+              txt = txt.replace("<application ", "<application tools:replace=\"android:appComponentFactory,android:allowBackup,android:label,android:theme,android:icon\" ", 1)
+
+          open(mp, "w", encoding="utf-8").write(txt)
+          print("Manifest and all resources cleaned!")
+          '
+
+      - name: Install Gradle 8.7
+        run: |
+          python3 -c 'import urllib.request; urllib.request.urlretrieve("https://services." + "gradle.org/distributions/gradle-8.7-bin.zip", "gradle.zip")'
+          unzip -q gradle.zip -d /opt/gradle
+          echo "/opt/gradle/gradle-8.7/bin" >> $GITHUB_PATH
+
+      - name: Build Debug APK
+        run: |
+          if ! gradle assembleDebug --console=plain > build.log 2>&1; then
+            echo "=== BUILD ERRORS ==="
+            grep -E "error:|ERROR:|What went wrong:|Caused by:" build.log | head -n 30
+            exit 1
+          fi
+
+          APK_FILE=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
+          echo "APK_PATH=$APK_FILE" >> $GITHUB_ENV
+
+      - name: Upload Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs
+          path: |
+            build.log
+            app/src/main/AndroidManifest.xml
+
+      - name: Upload APK to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: ${{ env.APK_PATH }}
+
+      - name: Upload APK to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${GITHUB_REF_NAME}" "${{ env.APK_PATH }}" --clobber
