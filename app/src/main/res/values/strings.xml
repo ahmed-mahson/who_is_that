@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">من هو ذا؟</string>
-    <string name="search_phone_title">ابحث برقم الهاتف</string>
+    <string name="app_name">من هو هذا؟</string>
+    <string name="search_phone_title">بحث برقم الهاتف</string>
     <string name="search_name_title">بحث بالاسم</string>
     <string name="phone_hint">أدخل رقم الهاتف</string>
-    <string name="name_hint">اكتب الاسم</string>
+    <string name="name_hint">أدخل الاسم</string>
     <string name="network_label">الشبكة</string>
     <string name="search">بحث</string>
-    <string name="all_networks">جميع الشبكات</string>
+    <string name="all_networks">كل الشبكات</string>
     <string name="yemen_mobile">يمن موبايل</string>
     <string name="you">YOU</string>
     <string name="sabafon">سبأفون</string>
